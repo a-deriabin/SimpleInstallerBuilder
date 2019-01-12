@@ -14,6 +14,14 @@ FileAppendUtil.o: Shared.o
 	gcc $(CFLAGS) src/FileAppendUtil/main.c -o obj/FileAppendUtil/main.o
 
 
+InstallerBuilder: InstallerBuilder.o
+	gcc $(OFLAGS) bin/InstallerBuilder.exe obj/InstallerBuilder/*.o obj/Shared/*.o
+
+InstallerBuilder.o: Shared.o
+	mkdir -p obj/InstallerBuilder
+	gcc $(CFLAGS) src/InstallerBuilder/main.c -o obj/InstallerBuilder/main.o
+
+
 
 UninstallerProgram: UninstallerProgram.o
 	gcc $(OFLAGS) bin/UninstallerProgram.exe obj/UninstallerProgram/*.o
