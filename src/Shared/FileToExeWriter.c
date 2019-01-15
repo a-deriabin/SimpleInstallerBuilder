@@ -1,36 +1,102 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
+#include <libgen.h>
+#include <string.h>
+
 #include "FileToExeWriter.h"
+#include "StringUtil.h"
+#include "FileUtil.h"
+#include "ArrayList.h"
 
 typedef char buffer_t;
 
-static FILE_APPEND_RESULT append_file(FILE *dest, FILE *source) {
-    //TODO: using larger buffer might optimize this
+static FILE_APPEND_RESULT append_file(FILE *dest, FILE *source,
+         char* dest_filename) {
+    //TODO: using larger buffer might speed this up
 
     buffer_t buffer;
-    uint32_t wrote_bytes = 0;
+    uint32_t total_bytes = 0;
+    int wrote_count;
 
     while (!feof(source)) {
+        // Read to buffer
         int read_count = fread(&buffer, sizeof(buffer_t), 1, source);
         if (read_count < 1)
             break;
         
-        int wrote_count = fwrite(&buffer, sizeof(buffer_t), 1, dest);
+        //TODO: read to big buffer, compress, then append
+
+        // Append what we've read to destination file
+        wrote_count = fwrite(&buffer, sizeof(buffer_t), 1, dest);
 
         if (wrote_count < 1)
             return FILE_APPEND_WRITE_ERROR;
 
-        wrote_bytes += wrote_count * sizeof(buffer_t);
+        // Count bytes
+        total_bytes += wrote_count * sizeof(buffer_t);
     }
 
-    int write_count_result = fwrite(&wrote_bytes, sizeof(uint32_t), 1, dest);
-    if (write_count_result < 1)
+    // Append byte count
+    wrote_count = fwrite(&total_bytes, sizeof(uint32_t), 1, dest);
+    if (wrote_count < 1)
         return FILE_APPEND_WRITE_ERROR;
-    
+
+    // Append file name
+    size_t name_length = strlen(dest_filename);
+    wrote_count = fwrite(dest_filename, sizeof(char) * name_length, 1, dest);
+    if (wrote_count < 1)
+        return FILE_APPEND_WRITE_ERROR;
+
+    // Append file name length
+    wrote_count = fwrite(&name_length, sizeof(uint16_t), 1, dest);
+    if (wrote_count < 1)
+        return FILE_APPEND_WRITE_ERROR;
+
     return FILE_APPEND_SUCCESS;
 }
 
+static FILE_APPEND_RESULT read_and_append(FILE* dest_file, char* source_file,
+         char* rel_path) {
+    FILE *in_file = fopen(source_file, "rb");
+    if (in_file == NULL)
+        return FILE_APPEND_OPEN_SOURCE_ERROR;
+
+    // Extract file name from file path.
+    // Copy string because basename() might modify the argument
+    char* source_path_copy = string_copy(source_file);
+    char* file_name = basename(source_path_copy);
+
+    // Determine resulting file path (where to extract it)
+    char* rel_file_name = string_concat(rel_path, file_name);
+
+    // Append file
+    FILE_APPEND_RESULT result = append_file(dest_file, in_file, rel_file_name);
+    fclose(in_file);
+
+    if (result != FILE_APPEND_SUCCESS)
+        return result;
+    return FILE_APPEND_SUCCESS;
+}
+
+static FILE_APPEND_RESULT read_and_append_recursive(
+        FILE* dest_file, char* source, char* prev_path) {
+
+    if (is_directory(source)) {
+        array_list* inner_entries = directory_entries(source);
+        for (int32_t i = 0; i < inner_entries->size; i++) {
+            char* entry_path = (char*) list_get(inner_entries, i);
+            printf("Found: %s\n", entry_path);
+            //TODO: call this func recursively
+        }
+
+        return FILE_APPEND_SUCCESS;
+    }
+    else {
+        printf("Found simple file.\n");
+        return read_and_append(dest_file, source, prev_path);
+    }
+}
 
 /*
     Appends specified files to the end of .exe (or any other binary) file.
@@ -43,31 +109,29 @@ FILE_APPEND_RESULT write_files(const char* const dest_file,
                  char** files_to_write,
                 const size_t write_file_count)
 {
+    // Open destination file
     FILE *out_file = fopen(dest_file, "a+b");
     if (out_file == NULL)
         return FILE_APPEND_OPEN_DEST_ERROR;
 
+    // Open source files, read them and append to the dest file
     for (size_t i = 0; i < write_file_count; i++) {
-        FILE *in_file = fopen(files_to_write[i], "rb");
-        if (in_file == NULL) {
-            fclose(out_file);
-            return FILE_APPEND_OPEN_SOURCE_ERROR;
-        }
-
-        FILE_APPEND_RESULT result = append_file(out_file, in_file);
-        fclose(in_file);
-
+        FILE_APPEND_RESULT result = read_and_append_recursive(out_file, files_to_write[i], "");
         if (result != FILE_APPEND_SUCCESS) {
             fclose(out_file);
             return result;
         }
     }
 
+    // Append file count
     uint32_t file_count = (uint32_t)write_file_count;
     int wrote_count = fwrite(&file_count, sizeof(uint32_t), 1, out_file);
-    if (wrote_count < 1)
+    if (wrote_count < 1) {
+        fclose(out_file);
         return FILE_APPEND_WRITE_ERROR;
+    }
 
+    // We're done
     fclose(out_file);
     return FILE_APPEND_SUCCESS;
 }

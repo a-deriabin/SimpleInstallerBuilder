@@ -40,10 +40,12 @@ UninstallerProgram.o:
 	gcc $(CFLAGS) src/UninstallerProgram/main.c -o obj/UninstallerProgram/main.o
 
 
-Shared.o:
+Shared.o: src/Shared/*.c
 	mkdir -p obj/Shared
 	gcc $(CFLAGS) src/Shared/FileToExeWriter.c -o obj/Shared/FileToExeWriter.o
-
+	gcc $(CFLAGS) src/Shared/ArrayList.c -o obj/Shared/ArrayList.o
+	gcc $(CFLAGS) src/Shared/FileUtil.c -o obj/Shared/FileUtil.o
+	gcc $(CFLAGS) src/Shared/StringUtil.c -o obj/Shared/StringUtil.o
 
 
 clean:
