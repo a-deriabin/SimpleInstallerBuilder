@@ -1,9 +1,11 @@
 CFLAGS=-c -std=c11 -pedantic -Wall
 OFLAGS=-o
 
-all:
-	#TODO
-
+all: FileAppendUtil InstallerBuilder InstallerProgram UninstallerProgram
+	./bin/FileAppendUtil "./bin/InstallerBuilder.exe" \
+	 "./bin/InstallerProgram.exe" "./bin/UninstallerProgram.exe"
+	rm -rf ./bin/FileAppendUtil.exe ./bin/InstallerProgram.exe \
+	 ./bin/UninstallerProgram.exe
 
 
 FileAppendUtil: FileAppendUtil.o
@@ -21,6 +23,13 @@ InstallerBuilder.o: Shared.o
 	mkdir -p obj/InstallerBuilder
 	gcc $(CFLAGS) src/InstallerBuilder/main.c -o obj/InstallerBuilder/main.o
 
+
+InstallerProgram: InstallerProgram.o
+	gcc $(OFLAGS) bin/InstallerProgram.exe obj/InstallerProgram/*.o obj/Shared/*.o
+
+InstallerProgram.o: Shared.o
+	mkdir -p obj/InstallerProgram
+	gcc $(CFLAGS) src/InstallerProgram/main.c -o obj/InstallerProgram/main.o
 
 
 UninstallerProgram: UninstallerProgram.o
