@@ -1,23 +1,33 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdint.h>
 #include "FileToExeWriter.h"
+
+typedef char buffer_t;
 
 static FILE_APPEND_RESULT append_file(FILE *dest, FILE *source) {
     //TODO: using larger buffer might optimize this
 
-    char buffer;
+    buffer_t buffer;
+    uint32_t wrote_bytes = 0;
 
     while (!feof(source)) {
-        int read_count = fread(&buffer, sizeof(char), 1, source);
+        int read_count = fread(&buffer, sizeof(buffer_t), 1, source);
         if (read_count < 1)
             break;
         
-        int wrote_count = fwrite(&buffer, sizeof(char), 1, dest);
+        int wrote_count = fwrite(&buffer, sizeof(buffer_t), 1, dest);
 
-        if (wrote_count != 1)
+        if (wrote_count < 1)
             return FILE_APPEND_WRITE_ERROR;
+
+        wrote_bytes += wrote_count * sizeof(buffer_t);
     }
 
+    int write_count_result = fwrite(&wrote_bytes, sizeof(uint32_t), 1, dest);
+    if (write_count_result < 1)
+        return FILE_APPEND_WRITE_ERROR;
+    
     return FILE_APPEND_SUCCESS;
 }
 
@@ -47,9 +57,16 @@ FILE_APPEND_RESULT write_files(const char* const dest_file,
         FILE_APPEND_RESULT result = append_file(out_file, in_file);
         fclose(in_file);
 
-        if (result != FILE_APPEND_SUCCESS)
+        if (result != FILE_APPEND_SUCCESS) {
+            fclose(out_file);
             return result;
+        }
     }
+
+    uint32_t file_count = (uint32_t)write_file_count;
+    int wrote_count = fwrite(&file_count, sizeof(uint32_t), 1, out_file);
+    if (wrote_count < 1)
+        return FILE_APPEND_WRITE_ERROR;
 
     fclose(out_file);
     return FILE_APPEND_SUCCESS;

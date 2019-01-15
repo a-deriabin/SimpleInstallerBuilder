@@ -15,10 +15,11 @@ int main(int argc, char *argv[])
         return 0;
     }
 
+    int file_count = argc - 2;
     char *dest = argv[1];
-    char **source = (char**) malloc(sizeof(char*) * argc - 2);
+    char **source = (char**) malloc(sizeof(char*) * file_count);
 
-    for (int i = 0; i < argc - 2; i++)
+    for (int i = 0; i < file_count; i++)
         source[i] = argv[i + 2];
 
     FILE_APPEND_RESULT result = write_files(dest, source, argc - 2);
