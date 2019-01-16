@@ -64,17 +64,26 @@ static FILE_APPEND_RESULT append_file(FILE *dest, FILE *source,
 
 static FILE_APPEND_RESULT read_and_append(FILE* dest_file, char* source_file,
          char* rel_path) {
+
+    printf("DBG: Opening file: %s\n", source_file);
     FILE *in_file = fopen(source_file, "rb");
     if (in_file == NULL)
         return FILE_APPEND_OPEN_SOURCE_ERROR;
 
+    printf("DBG: done open file.\n");
+
     // Extract file name from file path.
     // Copy string because basename() might modify the argument
     char* source_path_copy = string_copy(source_file);
+    printf("DBG: done copy source path.\n");
+
     char* file_name = basename(source_path_copy);
+    printf("DBG: basename: %s\n", file_name);
 
     // Determine resulting file path (where to extract it)
     char* rel_file_name = string_concat(rel_path, file_name);
+
+    printf("DBG: appending file with relative name: %s\n", rel_file_name);
 
     // Append file
     FILE_APPEND_RESULT result = append_file(dest_file, in_file, rel_file_name);
@@ -88,7 +97,11 @@ static FILE_APPEND_RESULT read_and_append(FILE* dest_file, char* source_file,
 static FILE_APPEND_RESULT read_and_append_recursive(
         FILE* dest_file, char* source, char* prev_path) {
 
+    printf("DBG: cur relative dir: %s\n", prev_path);
+    printf("DBG: cur file path: %s\n", source);
+
     if (is_directory(source)) {
+        printf("DBG: found directory.\n");
         char* source_path_copy = string_copy(source);
         char* cur_dir_name = basename(source_path_copy);
         char* new_prev_path = string_concat(
@@ -97,15 +110,19 @@ static FILE_APPEND_RESULT read_and_append_recursive(
 
         array_list* inner_entries = directory_entries(source);
         for (int32_t i = 0; i < inner_entries->size; i++) {
-            char* entry_path = (char*) list_get(inner_entries, i);
-            printf("Found: %s\n", entry_path);
+            char* entry_path = *((char**) list_get(inner_entries, i));
+            printf("DBG: Found inner entry: %s\n", entry_path);
+            if (strcmp(entry_path, ".") == 0)
+                continue;
+            if (strcmp(entry_path, "..") == 0)
+                continue;
             read_and_append_recursive(dest_file, entry_path, new_prev_path);
         }
 
         return FILE_APPEND_SUCCESS;
     }
     else {
-        printf("Found simple file.\n");
+        printf("DBG: Found file.\n");
         return read_and_append(dest_file, source, prev_path);
     }
 }

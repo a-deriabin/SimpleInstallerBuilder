@@ -3,9 +3,9 @@ OFLAGS=-o
 
 all: FileAppendUtil InstallerBuilder InstallerProgram UninstallerProgram
 	./bin/FileAppendUtil "./bin/InstallerBuilder.exe" \
-	 "./bin/InstallerProgram.exe" "./bin/UninstallerProgram.exe"
-	rm -rf ./bin/FileAppendUtil.exe ./bin/InstallerProgram.exe \
-	 ./bin/UninstallerProgram.exe
+	 "./bin/Installer.exe" "./bin/Uninstall.exe"
+	rm -rf ./bin/FileAppendUtil.exe ./bin/Installer.exe \
+	 ./bin/Uninstall.exe
 
 
 FileAppendUtil: FileAppendUtil.o
@@ -25,7 +25,7 @@ InstallerBuilder.o: Shared.o
 
 
 InstallerProgram: InstallerProgram.o
-	gcc $(OFLAGS) bin/InstallerProgram.exe obj/InstallerProgram/*.o obj/Shared/*.o
+	gcc $(OFLAGS) bin/Installer.exe obj/InstallerProgram/*.o obj/Shared/*.o
 
 InstallerProgram.o: Shared.o
 	mkdir -p obj/InstallerProgram
@@ -33,7 +33,7 @@ InstallerProgram.o: Shared.o
 
 
 UninstallerProgram: UninstallerProgram.o
-	gcc $(OFLAGS) bin/UninstallerProgram.exe obj/UninstallerProgram/*.o
+	gcc $(OFLAGS) bin/Uninstall.exe obj/UninstallerProgram/*.o
 
 UninstallerProgram.o:
 	mkdir -p obj/UninstallerProgram

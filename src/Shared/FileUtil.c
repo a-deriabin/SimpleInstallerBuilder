@@ -1,10 +1,12 @@
 #include <stdlib.h>
+#include <stdio.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <dirent.h>
 
 #include "FileUtil.h"
 #include "ArrayList.h"
+#include "StringUtil.h"
 
 int is_directory(const char* path) {
     struct stat statbuf;
@@ -22,13 +24,14 @@ int is_directory(const char* path) {
 array_list* directory_entries(const char* dir_path) {
     DIR *dir;
     struct dirent *ent;
-    array_list* list = list_new(sizeof(char*));
+    array_list* list = list_new(sizeof(char**));
 
     if ((dir = opendir(dir_path)) == NULL)
         return NULL;
 
     while ((ent = readdir(dir)) != NULL) {
-        list_add(list, &(ent->d_name));
+        char* dir_name = string_copy(ent->d_name);
+        list_add(list, &dir_name);
     }
 
     closedir(dir);

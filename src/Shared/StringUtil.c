@@ -7,7 +7,7 @@
 #include "StringUtil.h"
 
 char* string_copy(char* str_to_copy) {
-    size_t length = strlen(str_to_copy);
+    size_t length = strlen(str_to_copy) + 1;
     char* new_str = (char*) malloc(sizeof(char) * length);
     strcpy(new_str, str_to_copy);
     return new_str;

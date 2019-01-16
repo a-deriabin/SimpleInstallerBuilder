@@ -4,6 +4,8 @@
 #include <stdbool.h>
 #include "../Shared/StringUtil.h"
 #include "../Shared/FileExtracter.h"
+#include "../Shared/FileToExeWriter.h"
+#include "../Shared/ArrayList.h"
 
 static void print_extract_error(FILE_EXTRACT_RESULT result) {
     switch (result) {
@@ -33,6 +35,48 @@ static void print_extract_error(FILE_EXTRACT_RESULT result) {
     }
 }
 
+static void print_append_error(FILE_APPEND_RESULT result) {
+    switch (result) {
+        case FILE_APPEND_SUCCESS:
+            printf("Finished successfully.\n");
+            break;
+        case FILE_APPEND_OPEN_DEST_ERROR:
+            printf("Failed to open destination file.\n");
+            break;
+        case FILE_APPEND_OPEN_SOURCE_ERROR:
+            printf("Failed to open one of the source files.\n");
+            break;
+        case FILE_APPEND_WRITE_ERROR:
+            printf("Failed to write to a destination file.\n");
+            break;
+    }
+}
+
+static void parse_args(int argc, char** argv,
+         char** list_file_name, bool* include_uninstaller) {
+
+    for (int i = 1; i < argc; i++) {
+        if (strcmp(argv[i], "-l") == 0) {
+            *list_file_name = argv[i + 1];
+            i += 1;
+            continue;
+        }
+        
+        if (strcmp(argv[i], "-u") == 0) {
+            if (*argv[i+1] == 'Y' || *argv[i+1] == 'y')
+                *include_uninstaller = true;
+            else if (*argv[i+1] == 'N' || *argv[i+1] == 'n')
+                *include_uninstaller = false;
+            else
+                printf("Unknown option %s. Expected Y or N.\n", argv[i+1]);
+            i += 1;
+            continue;
+        }
+        
+        printf("Unknown argument: %s\n", argv[i]);
+    }
+}
+
 /*
     InstallerBuilder entry point.
     Input: list of files and configuration.
@@ -52,33 +96,13 @@ static void print_extract_error(FILE_EXTRACT_RESULT result) {
 */
 int main(int argc, char** argv)
 {
+    // Get settings
     char* list_file_name = "install_files.txt";
     bool include_uninstaller = true;
+    parse_args(argc, argv, &list_file_name, &include_uninstaller);
 
-    for (int i = 1; i < argc; i++) {
-        if (strcmp(argv[i], "-l") == 0) {
-            list_file_name = argv[i + 1];
-            i += 1;
-            continue;
-        }
-        
-        if (strcmp(argv[i], "-u") == 0) {
-            if (*argv[i+1] == 'Y' || *argv[i+1] == 'y')
-                include_uninstaller = true;
-            else if (*argv[i+1] == 'N' || *argv[i+1] == 'n')
-                include_uninstaller = false;
-            else
-                printf("Unknown option %s. Expected Y or N.\n", argv[i+1]);
-            i += 1;
-            continue;
-        }
-        
-        printf("Unknown argument: %s\n", argv[i]);
-    }
-
-
+    // Extract files of current file
     char* cur_file = argv[0];
-    printf("Cur file is: %s\n", cur_file);
     FILE_EXTRACT_RESULT extract_result = extract_files(cur_file);
     if (extract_result != EXTRACT_SUCCESS) {
         printf("Failed to extract files: ");
@@ -87,24 +111,58 @@ int main(int argc, char** argv)
     }
     printf("Extracted files successfully.\n");
 
-
+    // Get list of files to be packed
     FILE *list_file = fopen(list_file_name, "r");
     if (list_file == NULL) {
         printf("Failed to open file: %s", list_file_name);
         return 0;
     }
 
-    char* line = (char*) malloc(sizeof(char) * 255);
-    while (fgets(line, 255, list_file) != NULL) {
-        char* trimmed = string_trim(line);
-        printf("Retrieved line of text: %s\n", trimmed);
+    array_list* paths_list = list_new(sizeof(char**));
+
+    // Read file paths line by line (one line is one path)
+    char* line_buffer = (char*) malloc(sizeof(char) * 255);
+    while (fgets(line_buffer, 255, list_file) != NULL) {
+        char* trimmed_line = string_trim(line_buffer);
+        if (string_is_empty(trimmed_line))
+            continue;
+        list_add(paths_list, &trimmed_line);
+        printf("DBG: got path: %s\n", trimmed_line);
+        printf("DBG: added path %s\n", *((char**)list_get(paths_list, paths_list->size - 1)));
+    }
+
+    // Add uninstaller to list if needed
+    if (include_uninstaller) {
+        char* uninstaller_str = string_copy("Uninstall.exe");
+        list_add(paths_list, &uninstaller_str);
     }
 
     fclose(list_file);
 
-    printf("TODO: generate installer file.\n");
-    if (include_uninstaller)
-        printf("TODO: include installer.\n");
+    // Convert list to array
+    char** paths_arr = (char**) list_to_array(paths_list);
+    size_t path_count = (size_t) paths_list->size; 
+
+    printf("DBG: Path count: %u\n", path_count);
+
+    for (size_t i = 0; i < path_count; i++) {
+        printf("DBG: file %u: ", i);
+        printf("%s\n", *((char**)list_get(paths_list, i)));
+    }
+
+    // Append each file from the list into installer executable
+    FILE_APPEND_RESULT append_result = write_files("Installer.exe", paths_arr, path_count);
+    if (append_result != FILE_APPEND_SUCCESS) {
+        printf("Installer generation error: ");
+        print_append_error(append_result);
+    }
+
+    // Remove unneeded files and finish
+    remove("Uninstall.exe");
+    if (append_result != FILE_APPEND_SUCCESS)
+        remove("Installer.exe");
+    else
+        printf("Finished successfully.\n");
 
     return 0;
 }
