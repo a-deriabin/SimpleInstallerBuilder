@@ -3,6 +3,35 @@
 #include <string.h>
 #include <stdbool.h>
 #include "../Shared/StringUtil.h"
+#include "../Shared/FileExtracter.h"
+
+static void print_extract_error(FILE_EXTRACT_RESULT result) {
+    switch (result) {
+        case EXTRACT_OPEN_SOURCE_ERROR:
+            printf("Failed to open source file.\n");
+            break;
+
+        case EXTRACT_OPEN_DEST_ERROR:
+            printf("Failed to open destination file.\n");
+            break;
+
+        case EXTRACT_READ_ERROR:
+            printf("Failed to read from source file.\n");
+            break;
+
+        case EXTRACT_WRITE_ERROR:
+            printf("Failed to write to destination file.\n");
+            break;
+
+        case EXTRACT_SUCCESS:
+            printf("Everything's ok.\n");
+            break;
+
+        default:
+            printf("Unknown error.\n");
+            break;
+    }
+}
 
 /*
     InstallerBuilder entry point.
@@ -46,6 +75,18 @@ int main(int argc, char** argv)
         
         printf("Unknown argument: %s\n", argv[i]);
     }
+
+
+    char* cur_file = argv[0];
+    printf("Cur file is: %s\n", cur_file);
+    FILE_EXTRACT_RESULT extract_result = extract_files(cur_file);
+    if (extract_result != EXTRACT_SUCCESS) {
+        printf("Failed to extract files: ");
+        print_extract_error(extract_result);
+        return 0;
+    }
+    printf("Extracted files successfully.\n");
+
 
     FILE *list_file = fopen(list_file_name, "r");
     if (list_file == NULL) {

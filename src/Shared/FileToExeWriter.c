@@ -42,16 +42,22 @@ static FILE_APPEND_RESULT append_file(FILE *dest, FILE *source,
     if (wrote_count < 1)
         return FILE_APPEND_WRITE_ERROR;
 
+    printf("DBG: wrote byte count: %u\n", total_bytes);
+
     // Append file name
-    size_t name_length = strlen(dest_filename);
+    uint16_t name_length = (uint16_t) strlen(dest_filename) + 1;
     wrote_count = fwrite(dest_filename, sizeof(char) * name_length, 1, dest);
     if (wrote_count < 1)
         return FILE_APPEND_WRITE_ERROR;
+
+    printf("DBG: wrote file name: %s\n", dest_filename);
 
     // Append file name length
     wrote_count = fwrite(&name_length, sizeof(uint16_t), 1, dest);
     if (wrote_count < 1)
         return FILE_APPEND_WRITE_ERROR;
+
+    printf("DBG: wrote file length: %u\n", name_length);
 
     return FILE_APPEND_SUCCESS;
 }
@@ -83,11 +89,17 @@ static FILE_APPEND_RESULT read_and_append_recursive(
         FILE* dest_file, char* source, char* prev_path) {
 
     if (is_directory(source)) {
+        char* source_path_copy = string_copy(source);
+        char* cur_dir_name = basename(source_path_copy);
+        char* new_prev_path = string_concat(
+                prev_path,
+                string_concat(cur_dir_name, "/"));
+
         array_list* inner_entries = directory_entries(source);
         for (int32_t i = 0; i < inner_entries->size; i++) {
             char* entry_path = (char*) list_get(inner_entries, i);
             printf("Found: %s\n", entry_path);
-            //TODO: call this func recursively
+            read_and_append_recursive(dest_file, entry_path, new_prev_path);
         }
 
         return FILE_APPEND_SUCCESS;
@@ -130,6 +142,8 @@ FILE_APPEND_RESULT write_files(const char* const dest_file,
         fclose(out_file);
         return FILE_APPEND_WRITE_ERROR;
     }
+
+    printf("DBG: wrote file count: %u\n", file_count);
 
     // We're done
     fclose(out_file);

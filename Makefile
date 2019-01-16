@@ -43,6 +43,7 @@ UninstallerProgram.o:
 Shared.o: src/Shared/*.c
 	mkdir -p obj/Shared
 	gcc $(CFLAGS) src/Shared/FileToExeWriter.c -o obj/Shared/FileToExeWriter.o
+	gcc $(CFLAGS) src/Shared/FileExtracter.c -o obj/Shared/FileExtracter.o
 	gcc $(CFLAGS) src/Shared/ArrayList.c -o obj/Shared/ArrayList.o
 	gcc $(CFLAGS) src/Shared/FileUtil.c -o obj/Shared/FileUtil.o
 	gcc $(CFLAGS) src/Shared/StringUtil.c -o obj/Shared/StringUtil.o
@@ -50,4 +51,4 @@ Shared.o: src/Shared/*.c
 
 clean:
 	rm -rf ./obj/*
-	rm -rf ./bin/*
+	rm -rf ./bin/*.exe
