@@ -8,12 +8,7 @@ all: FileAppendUtil InstallerBuilder InstallerProgram UninstallerProgram
 	 ./bin/Uninstall.exe
 
 
-test: Shared.o
-	mkdir -p obj/Tests
-	mkdir -p bin/Tests
-	gcc $(CFLAGS) src/Tests/StringUtilTests.c -o obj/Tests/StringUtilTests.o
-	gcc $(OFLAGS) bin/Tests/StringUtilTests.exe obj/Tests/StringUtilTests.o obj/Shared/*.o
-	./bin/Tests/StringUtilTests.exe
+
 
 FileAppendUtil: FileAppendUtil.o
 	gcc $(OFLAGS) bin/FileAppendUtil.exe obj/FileAppendUtil/*.o obj/Shared/*.o
@@ -56,6 +51,15 @@ Shared.o: src/Shared/*.c
 	gcc $(CFLAGS) src/Shared/StringUtil.c -o obj/Shared/StringUtil.o
 
 
+test: Shared.o
+	mkdir -p obj/Tests
+	mkdir -p bin_test
+	gcc $(CFLAGS) src/Tests/StringUtilTests.c -o obj/Tests/StringUtilTests.o
+	gcc $(OFLAGS) bin_test/StringUtilTests.exe obj/Tests/StringUtilTests.o obj/Shared/*.o
+	./bin_test/StringUtilTests.exe
+
+
 clean:
 	rm -rf ./obj/*
 	rm -rf ./bin/*.exe
+	rm -rf ./bin_test

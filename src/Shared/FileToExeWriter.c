@@ -95,7 +95,8 @@ static FILE_APPEND_RESULT read_and_append(FILE* dest_file, char* source_file,
 }
 
 static FILE_APPEND_RESULT read_and_append_recursive(
-        FILE* dest_file, char* source, char* prev_path) {
+        FILE* dest_file, char* source, char* prev_path,
+        uint32_t* file_count) {
 
     printf("DBG: cur relative dir: %s\n", prev_path);
     printf("DBG: cur file path: %s\n", source);
@@ -118,13 +119,14 @@ static FILE_APPEND_RESULT read_and_append_recursive(
                 continue;
             
             char* full_entry_path = path_combine(source, entry_path);
-            read_and_append_recursive(dest_file, full_entry_path, new_prev_path);
+            read_and_append_recursive(dest_file, full_entry_path, new_prev_path, file_count);
         }
 
         return FILE_APPEND_SUCCESS;
     }
     else {
         printf("DBG: Found file.\n");
+        *file_count += 1;
         return read_and_append(dest_file, source, prev_path);
     }
 }
@@ -146,8 +148,9 @@ FILE_APPEND_RESULT write_files(const char* const dest_file,
         return FILE_APPEND_OPEN_DEST_ERROR;
 
     // Open source files, read them and append to the dest file
+    uint32_t file_count = 0;
     for (size_t i = 0; i < write_file_count; i++) {
-        FILE_APPEND_RESULT result = read_and_append_recursive(out_file, files_to_write[i], "");
+        FILE_APPEND_RESULT result = read_and_append_recursive(out_file, files_to_write[i], "", &file_count);
         if (result != FILE_APPEND_SUCCESS) {
             fclose(out_file);
             return result;
@@ -155,7 +158,6 @@ FILE_APPEND_RESULT write_files(const char* const dest_file,
     }
 
     // Append file count
-    uint32_t file_count = (uint32_t)write_file_count;
     int wrote_count = fwrite(&file_count, sizeof(uint32_t), 1, out_file);
     if (wrote_count < 1) {
         fclose(out_file);
