@@ -30,6 +30,7 @@ void list_set(array_list* list, int32_t i, void* value_p) {
     memcpy((char*)list->array + i * list->entry_size, value_p, list->entry_size);
 }
 
+// TODO: this doesn't work properly (remove it?)
 void* list_to_array(const array_list* list) {
     char* arr = (char*) malloc(list->size);
     memcpy(arr, list->array, list->size * list->entry_size);

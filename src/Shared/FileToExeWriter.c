@@ -116,7 +116,9 @@ static FILE_APPEND_RESULT read_and_append_recursive(
                 continue;
             if (strcmp(entry_path, "..") == 0)
                 continue;
-            read_and_append_recursive(dest_file, entry_path, new_prev_path);
+            
+            char* full_entry_path = path_combine(source, entry_path);
+            read_and_append_recursive(dest_file, full_entry_path, new_prev_path);
         }
 
         return FILE_APPEND_SUCCESS;

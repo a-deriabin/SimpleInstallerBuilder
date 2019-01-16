@@ -103,7 +103,7 @@ int main(int argc, char** argv)
 
     // Extract files of current file
     char* cur_file = argv[0];
-    FILE_EXTRACT_RESULT extract_result = extract_files(cur_file);
+    FILE_EXTRACT_RESULT extract_result = extract_files(cur_file, ".");
     if (extract_result != EXTRACT_SUCCESS) {
         printf("Failed to extract files: ");
         print_extract_error(extract_result);
@@ -140,14 +140,17 @@ int main(int argc, char** argv)
     fclose(list_file);
 
     // Convert list to array
-    char** paths_arr = (char**) list_to_array(paths_list);
-    size_t path_count = (size_t) paths_list->size; 
+    size_t path_count = (size_t) paths_list->size;
+    char** paths_arr = (char**) malloc(sizeof(char*) * path_count);
 
     printf("DBG: Path count: %u\n", path_count);
 
     for (size_t i = 0; i < path_count; i++) {
         printf("DBG: file %u: ", i);
-        printf("%s\n", *((char**)list_get(paths_list, i)));
+        char* file = *((char**)list_get(paths_list, i));
+        char* fcopy = string_copy(file);
+        printf("%s\n", fcopy);
+        paths_arr[i] = fcopy;
     }
 
     // Append each file from the list into installer executable

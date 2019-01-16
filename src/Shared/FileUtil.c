@@ -37,3 +37,13 @@ array_list* directory_entries(const char* dir_path) {
     closedir(dir);
     return list;
 }
+
+char* path_combine(const char* dir, const char* file) {
+    char last_dir_char = last_char(dir);
+    
+    if (last_dir_char == '\0' || last_dir_char == '/' || last_dir_char == '\\') {
+        return string_concat(dir, file);
+    }
+    else
+        return string_concat(string_concat(dir, "/"), file);
+}

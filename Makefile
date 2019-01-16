@@ -8,6 +8,13 @@ all: FileAppendUtil InstallerBuilder InstallerProgram UninstallerProgram
 	 ./bin/Uninstall.exe
 
 
+test: Shared.o
+	mkdir -p obj/Tests
+	mkdir -p bin/Tests
+	gcc $(CFLAGS) src/Tests/StringUtilTests.c -o obj/Tests/StringUtilTests.o
+	gcc $(OFLAGS) bin/Tests/StringUtilTests.exe obj/Tests/StringUtilTests.o obj/Shared/*.o
+	./bin/Tests/StringUtilTests.exe
+
 FileAppendUtil: FileAppendUtil.o
 	gcc $(OFLAGS) bin/FileAppendUtil.exe obj/FileAppendUtil/*.o obj/Shared/*.o
 

@@ -2,8 +2,10 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include "FileExtracter.h"
+#include "FileUtil.h"
+#include "StringUtil.h"
 
-static FILE_EXTRACT_RESULT extract_next(FILE* from) {
+static FILE_EXTRACT_RESULT extract_next(FILE* from, const char* dest_dir) {
     // Read name length
     uint16_t name_length;
     fseek(from, -sizeof(uint16_t), SEEK_CUR);
@@ -33,8 +35,12 @@ static FILE_EXTRACT_RESULT extract_next(FILE* from) {
     read_result = fread(buffer, sizeof(char) * file_size, 1, from);
     fseek(from, -sizeof(char) * file_size, SEEK_CUR);
 
+    // Make full file path
+    char* path_str = path_combine(dest_dir, name_str);
+    printf("DBG: output file is: %s\n", path_str);
+
     // Write to a new file
-    FILE* out_file = fopen(name_str, "wb");
+    FILE* out_file = fopen(path_str, "wb");
     if (out_file == NULL)
         return EXTRACT_OPEN_DEST_ERROR;
 
@@ -48,7 +54,7 @@ static FILE_EXTRACT_RESULT extract_next(FILE* from) {
     return EXTRACT_SUCCESS;
 }
 
-FILE_EXTRACT_RESULT extract_files(const char* from_file) {
+FILE_EXTRACT_RESULT extract_files(const char* from_file, const char* dest_dir) {
     FILE* in_file = fopen(from_file, "rb");
     if (in_file == NULL)
         return EXTRACT_OPEN_SOURCE_ERROR;
@@ -74,7 +80,7 @@ FILE_EXTRACT_RESULT extract_files(const char* from_file) {
 
     // Extract files
     for (uint32_t i = 0; i < file_count; i++) {
-        FILE_EXTRACT_RESULT result = extract_next(in_file);
+        FILE_EXTRACT_RESULT result = extract_next(in_file, dest_dir);
         if (result != EXTRACT_SUCCESS) {
             fclose(in_file);
             return result;

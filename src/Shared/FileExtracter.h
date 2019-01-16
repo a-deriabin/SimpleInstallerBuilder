@@ -9,6 +9,6 @@ typedef enum {
     EXTRACT_WRITE_ERROR
 } FILE_EXTRACT_RESULT;
 
-FILE_EXTRACT_RESULT extract_files(const char* from_file);
+FILE_EXTRACT_RESULT extract_files(const char* from_file, const char* dest_dir);
 
 #endif
