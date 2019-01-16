@@ -1,9 +1,13 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
+#include <direct.h>
+#include <libgen.h>
+
 #include "FileExtracter.h"
 #include "FileUtil.h"
 #include "StringUtil.h"
+
 
 static FILE_EXTRACT_RESULT extract_next(FILE* from, const char* dest_dir) {
     // Read name length
@@ -38,6 +42,12 @@ static FILE_EXTRACT_RESULT extract_next(FILE* from, const char* dest_dir) {
     // Make full file path
     char* path_str = path_combine(dest_dir, name_str);
     printf("DBG: output file is: %s\n", path_str);
+
+    // Ensure directory exists
+    char* path_str_copy = string_copy(path_str);
+    char* path_dir = dirname(path_str_copy);
+    mkdir(path_dir);
+    printf("Created dest dir: %s\n", path_dir);
 
     // Write to a new file
     FILE* out_file = fopen(path_str, "wb");
