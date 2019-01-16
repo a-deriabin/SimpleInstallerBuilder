@@ -12,26 +12,6 @@ char* string_create_empty() {
     return str;
 }
 
-/*char* string_copy(const char* str_to_copy) {
-    if (str_to_copy == NULL)
-        return string_create_empty();
-
-    size_t length = strlen(str_to_copy) + 1;
-    printf("DBG_STRUTIL: got length: %u\n", length);
-    printf("str: %s\n", str_to_copy);
-    size_t to_alloc = sizeof(char) * length;
-    printf("trying to allocate %u bytes\n", to_alloc);
-    char* new_str = (char*) malloc(to_alloc);
-    if (new_str == NULL) {
-        printf("failed to malloc\n");
-        return string_create_empty();
-    }
-    printf("DBG_STRUTIL: malloc successful\n");
-    strcpy(new_str, str_to_copy);
-    printf("DBG_STRUTIL: strcpy successful\n");
-    return new_str;
-}*/
-
 char* string_copy(const char* str_to_copy) {
     size_t length = strlen(str_to_copy) + 1;
     char* new_str = (char*) malloc(sizeof(char) * length);

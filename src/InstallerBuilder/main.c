@@ -7,6 +7,8 @@
 #include "../Shared/FileToExeWriter.h"
 #include "../Shared/ArrayList.h"
 
+#undef DEBUG
+
 static void print_extract_error(FILE_EXTRACT_RESULT result) {
     switch (result) {
         case EXTRACT_OPEN_SOURCE_ERROR:
@@ -127,8 +129,10 @@ int main(int argc, char** argv)
         if (string_is_empty(trimmed_line))
             continue;
         list_add(paths_list, &trimmed_line);
+
+        #if DEBUG
         printf("DBG: got path: %s\n", trimmed_line);
-        printf("DBG: added path %s\n", *((char**)list_get(paths_list, paths_list->size - 1)));
+        #endif
     }
 
     // Add uninstaller to list if needed
@@ -143,14 +147,19 @@ int main(int argc, char** argv)
     size_t path_count = (size_t) paths_list->size;
     char** paths_arr = (char**) malloc(sizeof(char*) * path_count);
 
+    #if DEBUG
     printf("DBG: Path count: %u\n", path_count);
+    #endif
 
     for (size_t i = 0; i < path_count; i++) {
-        printf("DBG: file %u: ", i);
         char* file = *((char**)list_get(paths_list, i));
         char* fcopy = string_copy(file);
-        printf("%s\n", fcopy);
         paths_arr[i] = fcopy;
+
+        #if DEBUG
+        printf("DBG: file %u: ", i);
+        printf("%s\n", fcopy);
+        #endif
     }
 
     // Append each file from the list into installer executable

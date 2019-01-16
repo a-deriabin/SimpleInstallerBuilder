@@ -43,7 +43,6 @@ int main(int argc, char** argv)
     }
 
     char* cur_file = argv[0];
-    printf("Cur file: %s\n", cur_file);
     FILE_EXTRACT_RESULT result = extract_files(cur_file, dest_path);
     print_result_msg(result);
     return 0;

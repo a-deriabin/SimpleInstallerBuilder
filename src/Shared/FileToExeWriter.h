@@ -6,7 +6,6 @@ typedef enum {
     FILE_APPEND_OPEN_DEST_ERROR,
     FILE_APPEND_OPEN_SOURCE_ERROR,
     FILE_APPEND_WRITE_ERROR
-
 } FILE_APPEND_RESULT;
 
 extern FILE_APPEND_RESULT write_files(const char* const dest_file,
