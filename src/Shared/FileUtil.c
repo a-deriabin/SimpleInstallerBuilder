@@ -11,7 +11,7 @@
 #include "ArrayList.h"
 #include "StringUtil.h"
 
-#define DEBUG true
+#define DEBUG false
 
 int is_directory(const char* path) {
     struct stat statbuf;

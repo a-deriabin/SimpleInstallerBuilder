@@ -7,7 +7,7 @@
 #include "../Shared/FileToExeWriter.h"
 #include "../Shared/ArrayList.h"
 
-#define DEBUG true
+#define DEBUG false
 
 static void print_extract_error(FILE_EXTRACT_RESULT result) {
     switch (result) {

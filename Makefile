@@ -27,7 +27,7 @@ InstallerBuilder.o: Shared.o
 
 
 InstallerProgram: InstallerProgram.o
-	gcc $(OFLAGS) bin/Installer.exe obj/InstallerProgram/*.o obj/Shared/*.o -lgdi32
+	gcc $(OFLAGS) bin/Installer.exe obj/InstallerProgram/*.o obj/Shared/*.o -lgdi32 -mwindows
 
 InstallerProgram.o: Shared.o
 	mkdir -p obj/InstallerProgram
@@ -35,7 +35,7 @@ InstallerProgram.o: Shared.o
 
 
 UninstallerProgram: UninstallerProgram.o
-	gcc $(OFLAGS) bin/Uninstall.exe obj/UninstallerProgram/*.o obj/Shared/*.o -lgdi32
+	gcc $(OFLAGS) bin/Uninstall.exe obj/UninstallerProgram/*.o obj/Shared/*.o -lgdi32 -mwindows
 
 UninstallerProgram.o: Shared.o
 	mkdir -p obj/UninstallerProgram
