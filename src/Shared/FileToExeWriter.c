@@ -8,6 +8,8 @@
 #include "StringUtil.h"
 #include "FileUtil.h"
 #include "ArrayList.h"
+#include "BitUtil.h"
+#include "HuffmanCompression.h"
 
 #define DEBUG true
 
@@ -33,7 +35,20 @@ static FILE_APPEND_RESULT append_file(FILE *dest, FILE *source,
     // Compress only large enough files
     if (buffer_size > 100004096) { //TODO: change this number
         did_use_compression = true;
-        //TODO: compress
+        
+        //TODO: CHECK RESULTS!!! (NULL, etc)
+
+        huff_tree_node** occur_array = init_occurrence_array(buffer, buffer_size);
+        huff_tree_node* tree = build_tree(occur_array);
+        if (tree == NULL)
+            return FILE_APPEND_COMPRESS_ERROR;
+
+        BIT_WRITE_STREAM* w_stream = open_bit_write_stream(dest);
+        compress_and_write(buffer, buffer_size, occur_array, w_stream);
+        //TODO: flush, write offset and file size
+        close_bit_write_stream(w_stream);
+
+        write_occurrence_array(occur_array, dest);
     }
     else {
         did_use_compression = false;

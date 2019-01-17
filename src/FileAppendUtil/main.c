@@ -40,6 +40,9 @@ int main(int argc, char *argv[])
         case FILE_APPEND_READ_ERROR:
             printf("Failed to read from a source file.\n");
             break;
+        case FILE_APPEND_COMPRESS_ERROR:
+            printf("Failed to compress a file.\n");
+            break;
     }
 
     return 0;

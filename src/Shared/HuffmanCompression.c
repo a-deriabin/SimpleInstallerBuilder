@@ -4,20 +4,12 @@
 #include <stdbool.h>
 #include <string.h>
 
+#include "HuffmanCompression.h"
 #include "BitUtil.h"
 
 #define DEBUG true
 
-typedef struct huff_tree_node {
-    char value;
-    uint32_t count;
-    bool is_internal;
-    struct huff_tree_node* left;
-    struct huff_tree_node* right;
-    struct huff_tree_node* parent;
-} huff_tree_node;
-
-int huff_node_comp(const void* el_left, const void* el_right) {
+static int huff_node_comp(const void* el_left, const void* el_right) {
     huff_tree_node* left = *((huff_tree_node**)el_left);
     huff_tree_node* right = *((huff_tree_node**)el_right);
     if (left->count > right->count)
@@ -106,7 +98,7 @@ bool write_occurrence_array(huff_tree_node** arr, FILE* out_file) {
     return true;
 }
 
-bool write_compressed(const char* data, const size_t data_size,
+bool compress_and_write(const char* data, const size_t data_size,
      huff_tree_node** init_array, BIT_WRITE_STREAM* out_stream) {
 
     int w_result;
