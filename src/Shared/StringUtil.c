@@ -42,6 +42,14 @@ bool string_is_empty(const char* str) {
     return length == 0;
 }
 
+bool string_is_null_or_whitespace(const char* str) {
+    if (str == NULL)
+        return true;
+    char* trimmed = string_trim(str);
+    size_t length = strlen(trimmed);
+    return length == 0;
+}
+
 char* string_trim(const char* str) {
     size_t length = strlen(str);
     size_t from = 0;

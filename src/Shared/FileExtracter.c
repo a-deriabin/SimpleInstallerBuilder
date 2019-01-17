@@ -8,7 +8,7 @@
 #include "FileUtil.h"
 #include "StringUtil.h"
 
-#undef DEBUG
+#define DEBUG true
 
 static FILE_EXTRACT_RESULT extract_next(FILE* from, const char* dest_dir) {
     // Read name length

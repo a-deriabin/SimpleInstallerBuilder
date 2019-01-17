@@ -27,7 +27,7 @@ InstallerBuilder.o: Shared.o
 
 
 InstallerProgram: InstallerProgram.o
-	gcc $(OFLAGS) bin/Installer.exe obj/InstallerProgram/*.o obj/Shared/*.o
+	gcc $(OFLAGS) bin/Installer.exe obj/InstallerProgram/*.o obj/Shared/*.o -lgdi32
 
 InstallerProgram.o: Shared.o
 	mkdir -p obj/InstallerProgram
