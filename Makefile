@@ -35,9 +35,9 @@ InstallerProgram.o: Shared.o
 
 
 UninstallerProgram: UninstallerProgram.o
-	gcc $(OFLAGS) bin/Uninstall.exe obj/UninstallerProgram/*.o
+	gcc $(OFLAGS) bin/Uninstall.exe obj/UninstallerProgram/*.o obj/Shared/*.o -lgdi32
 
-UninstallerProgram.o:
+UninstallerProgram.o: Shared.o
 	mkdir -p obj/UninstallerProgram
 	gcc $(CFLAGS) src/UninstallerProgram/main.c -o obj/UninstallerProgram/main.o
 
