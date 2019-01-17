@@ -2,11 +2,13 @@
 #define FILE_UTIL_H
 
 #include <stdbool.h>
+#include <stdio.h>
 #include "ArrayList.h"
 
 int is_directory(const char* path);
 array_list* directory_entries(const char* dir_path);
 char* path_combine(const char* dir, const char* file);
 bool delete_recursively(const char* path);
+size_t get_file_size(FILE* source);
 
 #endif

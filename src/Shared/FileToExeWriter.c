@@ -9,44 +9,58 @@
 #include "FileUtil.h"
 #include "ArrayList.h"
 
-#undef DEBUG
+#define DEBUG true
 
 typedef char buffer_t;
 
 static FILE_APPEND_RESULT append_file(FILE *dest, FILE *source,
          char* dest_filename) {
-    //TODO: using larger buffer might speed this up
+    
+    // Read file to buffer
+    size_t buffer_size = get_file_size(source);
+    char* buffer = (char*) malloc(sizeof(char) * buffer_size);
+    int read_result = fread(buffer, buffer_size, 1, source);
+    if (read_result < 1)
+        return FILE_APPEND_READ_ERROR;
 
-    buffer_t buffer;
-    uint32_t total_bytes = 0;
+    #if DEBUG
+    printf("DBG: read file of size: %u\n", buffer_size);
+    #endif
+
+    char did_use_compression;
     int wrote_count;
 
-    while (!feof(source)) {
-        // Read to buffer
-        int read_count = fread(&buffer, sizeof(buffer_t), 1, source);
-        if (read_count < 1)
-            break;
-        
-        //TODO: read to big buffer, compress, then append
+    // Compress only large enough files
+    if (buffer_size > 100004096) { //TODO: change this number
+        did_use_compression = true;
+        //TODO: compress
+    }
+    else {
+        did_use_compression = false;
 
-        // Append what we've read to destination file
-        wrote_count = fwrite(&buffer, sizeof(buffer_t), 1, dest);
-
+        // Write raw file bytes
+        wrote_count = fwrite(buffer, buffer_size, 1, dest);
         if (wrote_count < 1)
             return FILE_APPEND_WRITE_ERROR;
 
-        // Count bytes
-        total_bytes += wrote_count * sizeof(buffer_t);
+        #if DEBUG
+        printf("DBG: wrote file content.\n");
+        #endif
+
+        // Append byte count
+        wrote_count = fwrite(&buffer_size, sizeof(uint32_t), 1, dest);
+        if (wrote_count < 1)
+            return FILE_APPEND_WRITE_ERROR;
+
+        #if DEBUG
+        printf("DBG: wrote byte count: %u\n", buffer_size);
+        #endif
     }
 
-    // Append byte count
-    wrote_count = fwrite(&total_bytes, sizeof(uint32_t), 1, dest);
+    // Write compression marker byte
+    wrote_count = fwrite(&did_use_compression, sizeof(char), 1, dest);
     if (wrote_count < 1)
         return FILE_APPEND_WRITE_ERROR;
-
-    #if DEBUG
-    printf("DBG: wrote byte count: %u\n", total_bytes);
-    #endif
 
     // Append file name
     uint16_t name_length = (uint16_t) strlen(dest_filename) + 1;

@@ -37,6 +37,9 @@ int main(int argc, char *argv[])
         case FILE_APPEND_WRITE_ERROR:
             printf("Failed to write to a destination file.\n");
             break;
+        case FILE_APPEND_READ_ERROR:
+            printf("Failed to read from a source file.\n");
+            break;
     }
 
     return 0;

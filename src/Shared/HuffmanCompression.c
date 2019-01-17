@@ -89,42 +89,42 @@ huff_tree_node* build_tree(huff_tree_node** init_array) {
     return arr[0];
 }
 
-bool compress_and_write(const char* data, const size_t data_size, FILE* out_file) {
-    huff_tree_node** occur_array = init_occurrence_array(data, data_size);
-    huff_tree_node* root = build_tree(occur_array);
-    if (root == NULL) {
-        #if DEBUG
-        printf("DBG: Failed to build code tree.\n");
-        #endif
-        return false;
-    }
+bool write_occurrence_array(huff_tree_node** arr, FILE* out_file) {
+    const size_t ARR_SIZE = 256;
+    int w_result = 0;
 
-    BIT_WRITE_STREAM* stream = open_bit_write_stream(out_file);
-    if (stream == NULL) {
-        #if DEBUG
-        printf("DBG: Failed to open bit write stream.\n");
-        #endif
-        return false;
+    for (size_t i = 0; i < ARR_SIZE; i++) {
+        w_result = fwrite(&(arr[i]->count), sizeof(uint32_t), 1, out_file);
+
+        if (w_result != 0) {
+            #if DEBUG
+            printf("Failed to write %d-th element of occurrence array.\n", i);
+            #endif
+            return false;
+        }
     }
+    return true;
+}
+
+bool write_compressed(const char* data, const size_t data_size,
+     huff_tree_node** init_array, BIT_WRITE_STREAM* out_stream) {
 
     int w_result;
     for (size_t i = 0; i < data_size; i++) {
         char c = data[i];
-        huff_tree_node* node = occur_array[c + 128];
+        huff_tree_node* node = init_array[c + 128];
         if (node == NULL) {
             #if DEBUG
             printf("DBG: error: node from occurrence array is null!\n");
             #endif
-
-            close_bit_write_stream(stream);
             return false;
         }
 
         while (node->parent != NULL) {
             if (node->parent->left == node)
-                w_result = write_bit(stream, 1);
+                w_result = write_bit(out_stream, 1);
             else if (node->parent->right == node)
-                w_result = write_bit(stream, 0);
+                w_result = write_bit(out_stream, 0);
             else {
                 #if DEBUG
                 printf("DBG: error: parent node doesn't reference to its child.\n");
@@ -144,15 +144,12 @@ bool compress_and_write(const char* data, const size_t data_size, FILE* out_file
         }
     } // end for()
 
-    // Align bit stream to 8 bits
-    uint8_t offset_buffer = 0;
-    flush_bit_write_stream(stream, &offset_buffer);
+    // // Align bit stream to 8 bits
+    // uint8_t offset_buffer = 0;
+    // flush_bit_write_stream(stream, &offset_buffer);
 
-    // Write bit stream offset
-    fwrite(&offset_buffer, sizeof(uint8_t), 1, out_file);
-
-    // Finish
-    close_bit_write_stream(stream);
+    // // Write bit stream offset
+    // fwrite(&offset_buffer, sizeof(uint8_t), 1, out_file);
     return true;
 }
 

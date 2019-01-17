@@ -99,3 +99,10 @@ bool delete_recursively(const char* path) {
         return !remove(path);
     }
 }
+
+size_t get_file_size(FILE* source) {
+    fseek(source, 0L, SEEK_END);
+    size_t size = ftell(source);
+    rewind(source);
+    return size;
+}

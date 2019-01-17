@@ -8,7 +8,7 @@
 #include "FileUtil.h"
 #include "StringUtil.h"
 
-#define DEBUG false
+#define DEBUG true
 
 static FILE_EXTRACT_RESULT extract_next(FILE* from, const char* dest_dir) {
     // Read name length
@@ -30,17 +30,39 @@ static FILE_EXTRACT_RESULT extract_next(FILE* from, const char* dest_dir) {
     printf("DBG: name length: %u\n", name_length);
     #endif
 
-    // Read file size
-    uint32_t file_size;
-    fseek(from, -sizeof(uint32_t), SEEK_CUR);
-    read_result = fread(&file_size, sizeof(uint32_t), 1, from);
-    fseek(from, -sizeof(uint32_t), SEEK_CUR);
+    // Read compression marker
+    char is_compressed = 0;
+    fseek(from, -sizeof(char), SEEK_CUR);
+    read_result = fread(&is_compressed, sizeof(char), 1, from);
+    fseek(from, -sizeof(char), SEEK_CUR);
 
-    // Read the whole file into buffer
-    char* buffer = (char*) malloc(file_size);
-    fseek(from, -sizeof(char) * file_size, SEEK_CUR);
-    read_result = fread(buffer, sizeof(char) * file_size, 1, from);
-    fseek(from, -sizeof(char) * file_size, SEEK_CUR);
+    #if DEBUG
+    printf("DBG: is compressed: %u\n", is_compressed);
+    #endif
+
+    // These should be filled during file extraction
+    char* buffer = NULL;
+    uint32_t file_size = 0;
+
+    if (is_compressed) {
+        //TODO: decompress
+    }
+    else {
+        // Read file size
+        fseek(from, -sizeof(uint32_t), SEEK_CUR);
+        read_result = fread(&file_size, sizeof(uint32_t), 1, from);
+        fseek(from, -sizeof(uint32_t), SEEK_CUR);
+
+        #if DEBUG
+        printf("DBG: read file size: %u\n", file_size);
+        #endif
+
+        // Read the whole file into buffer
+        buffer = (char*) malloc(file_size);
+        fseek(from, -sizeof(char) * file_size, SEEK_CUR);
+        read_result = fread(buffer, sizeof(char) * file_size, 1, from);
+        fseek(from, -sizeof(char) * file_size, SEEK_CUR);
+    }
 
     // Make full file path
     char* path_str = path_combine(dest_dir, name_str);
@@ -60,13 +82,17 @@ static FILE_EXTRACT_RESULT extract_next(FILE* from, const char* dest_dir) {
     free(name_str);
     free(path_str_copy);
 
+    #if DEBUG
+    printf("DBG: freed some memory.\n");
+    #endif
+
     // Write to a new file
     FILE* out_file = fopen(path_str, "wb");
-    free(path_str);
     if (out_file == NULL)
         return EXTRACT_OPEN_DEST_ERROR;
 
     int write_result = fwrite(buffer, sizeof(char) * file_size, 1, out_file);
+    free(path_str);
     free(buffer);
 
     if (write_result < 1) {

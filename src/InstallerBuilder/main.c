@@ -51,6 +51,9 @@ static void print_append_error(FILE_APPEND_RESULT result) {
         case FILE_APPEND_WRITE_ERROR:
             printf("Failed to write to a destination file.\n");
             break;
+        case FILE_APPEND_READ_ERROR:
+            printf("Failed to read from a source file.\n");
+            break;
     }
 }
 
