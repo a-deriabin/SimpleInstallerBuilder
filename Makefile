@@ -49,6 +49,7 @@ Shared.o: src/Shared/*.c
 	gcc $(CFLAGS) src/Shared/ArrayList.c -o obj/Shared/ArrayList.o
 	gcc $(CFLAGS) src/Shared/FileUtil.c -o obj/Shared/FileUtil.o
 	gcc $(CFLAGS) src/Shared/StringUtil.c -o obj/Shared/StringUtil.o
+	gcc $(CFLAGS) src/Shared/BitUtil.c -o obj/Shared/BitUtil.o
 
 
 test: Shared.o
@@ -56,7 +57,12 @@ test: Shared.o
 	mkdir -p bin_test
 	gcc $(CFLAGS) src/Tests/StringUtilTests.c -o obj/Tests/StringUtilTests.o
 	gcc $(OFLAGS) bin_test/StringUtilTests.exe obj/Tests/StringUtilTests.o obj/Shared/*.o
+
+	gcc $(CFLAGS) src/Tests/BitUtilTests.c -o obj/Tests/BitUtilTests.o
+	gcc $(OFLAGS) bin_test/BitUtilTests.exe obj/Tests/BitUtilTests.o obj/Shared/*.o
+
 	./bin_test/StringUtilTests.exe
+	./bin_test/BitUtilTests.exe
 
 
 clean:

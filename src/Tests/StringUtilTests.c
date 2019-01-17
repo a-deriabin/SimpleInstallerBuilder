@@ -72,11 +72,11 @@ static void test(int result, char* test_name) {
 int main() {
     printf("TRIM tests:\n");
     test(test_trim_1(), "test_trim_1");
-    test(test_trim_2(), "test_trim_1");
-    test(test_trim_3(), "test_trim_1");
-    test(test_trim_4(), "test_trim_1");
-    test(test_trim_5(), "test_trim_1");
-    test(test_trim_6(), "test_trim_1");
+    test(test_trim_2(), "test_trim_2");
+    test(test_trim_3(), "test_trim_3");
+    test(test_trim_4(), "test_trim_4");
+    test(test_trim_5(), "test_trim_5");
+    test(test_trim_6(), "test_trim_6");
 
     printf("\nLAST_CHAR tests:\n");
     test(test_last_char_1(), "last_char_1");
