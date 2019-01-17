@@ -34,6 +34,7 @@ int read_bit(BIT_READ_STREAM* stream, bool* bit_buffer) {
         return -5;
 
     const char BIT_MASK = 1;
+
     *bit_buffer = stream->bit_buffer & BIT_MASK;
     stream->bit_buffer >>= 1;
     stream->cur_bit += 1;
@@ -80,7 +81,7 @@ int write_bit(BIT_WRITE_STREAM* stream, bool bit) {
     if (stream->dest == NULL)
         return -3;
 
-    const char BIT_MASK = -80;
+    const char BIT_MASK = -80; // 1000 0000
 
     stream->bit_buffer |= BIT_MASK & bit;
 
