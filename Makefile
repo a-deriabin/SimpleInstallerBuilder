@@ -50,6 +50,7 @@ Shared.o: src/Shared/*.c
 	gcc $(CFLAGS) src/Shared/FileUtil.c -o obj/Shared/FileUtil.o
 	gcc $(CFLAGS) src/Shared/StringUtil.c -o obj/Shared/StringUtil.o
 	gcc $(CFLAGS) src/Shared/BitUtil.c -o obj/Shared/BitUtil.o
+	gcc $(CFLAGS) src/Shared/HuffmanCompression.c -o obj/Shared/HuffmanCompression.o
 
 
 test: Shared.o
