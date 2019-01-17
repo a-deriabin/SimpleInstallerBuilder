@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <windows.h>
+#include <shlobj.h>
 #include "../Shared/FileExtracter.h"
 #include "../Shared/StringUtil.h"
 
@@ -29,8 +30,30 @@ static char* get_result_msg(FILE_EXTRACT_RESULT result) {
 
 HWND hEdit;
 
+static void browse_btn_clicked(HWND hwnd) {
+    LPITEMIDLIST pidlBrowse;
+    BROWSEINFO BRinfo;
+    BRinfo.hwndOwner = hwnd;
+    BRinfo.pidlRoot = NULL;
+    BRinfo.pszDisplayName = NULL;
+    BRinfo.lpszTitle = "Select Folder";
+    BRinfo.ulFlags = BIF_RETURNONLYFSDIRS | BIF_NEWDIALOGSTYLE;
+    BRinfo.lpfn = NULL;
+    BRinfo.lParam = (LPARAM)NULL;
+
+    pidlBrowse = SHBrowseForFolder(&BRinfo); 
+
+    if (pidlBrowse != NULL)
+    {
+        char install_path[255];
+        SHGetPathFromIDList(pidlBrowse, install_path);
+
+        SetWindowText(hEdit, install_path);
+    }
+}
 
 static void install_btn_clicked(HWND hwnd) {
+    // Get destination path
     TCHAR dest_path[1024];
     GetWindowText(hEdit, dest_path, 1024);
 
@@ -39,12 +62,15 @@ static void install_btn_clicked(HWND hwnd) {
         return;
     }
 
+    // Get current file path
     TCHAR cur_file[MAX_PATH + 1];
     GetModuleFileName(NULL, cur_file, MAX_PATH + 1);
 
+    // Extract files from current file into destination folder
     FILE_EXTRACT_RESULT result = extract_files(cur_file, dest_path);
     char* result_msg = get_result_msg(result);
 
+    // Done
     MessageBox(hwnd, result_msg, "Install result", MB_OK);
 }
 
@@ -86,13 +112,11 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPara
 
         // Some action on form
         case WM_COMMAND:
-            if (LOWORD(wParam) == 10000) {
-                MessageBox(hwnd, "Clicked", "test", MB_OK);
-            }
+            if (LOWORD(wParam) == 10000)
+                browse_btn_clicked(hwnd);
 
-            if (LOWORD(wParam) == 10001) {
+            if (LOWORD(wParam) == 10001)
                 install_btn_clicked(hwnd);
-            }
             break;
 
         // Close form

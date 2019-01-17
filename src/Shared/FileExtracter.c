@@ -59,7 +59,6 @@ static FILE_EXTRACT_RESULT extract_next(FILE* from, const char* dest_dir) {
     // Free memory
     free(name_str);
     free(path_str_copy);
-    free(path_dir);
 
     // Write to a new file
     FILE* out_file = fopen(path_str, "wb");
