@@ -91,8 +91,6 @@ huff_tree_node* build_tree(huff_tree_node** init_array) {
         arr_size -= 1;
     }
 
-    //TODO: free copied array?
-
     return arr[0];
 }
 
