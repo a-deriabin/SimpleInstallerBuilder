@@ -10,7 +10,7 @@
 #include "BitUtil.h"
 #include "HuffmanCompression.h"
 
-#define DEBUG true
+#define DEBUG false
 
 static FILE_EXTRACT_RESULT extract_next(FILE* from, const char* dest_dir) {
     // Read name length
@@ -127,17 +127,6 @@ static FILE_EXTRACT_RESULT extract_next(FILE* from, const char* dest_dir) {
         #if DEBUG
         printf("DBG: done open read stream\n");
         #endif
-
-        // // Offset bit stream
-        // for (uint8_t i = 0; i < bit_offset; i++) {
-        //     read_result = skip_bit(r_stream);
-        //     if (read_result != 0)
-        //         return EXTRACT_DECOMPRESS_ERROR;
-        // }
-
-        // #if DEBUG
-        // printf("DBG: done bit offset\n");
-        // #endif
 
         // Decompress
         buffer = read_and_decompress(file_size, tree_root, r_stream);

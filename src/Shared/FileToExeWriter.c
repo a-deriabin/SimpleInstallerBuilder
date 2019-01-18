@@ -11,7 +11,7 @@
 #include "BitUtil.h"
 #include "HuffmanCompression.h"
 
-#define DEBUG true
+#define DEBUG false
 
 static FILE_APPEND_RESULT append_file(FILE *dest, FILE *source,
          char* dest_filename) {
@@ -31,7 +31,7 @@ static FILE_APPEND_RESULT append_file(FILE *dest, FILE *source,
     int w_result;
 
     // Compress only large enough files
-    if (buffer_size > 10004096) {
+    if (buffer_size > 4096) {
         #if DEBUG
         printf("DBG: start compression\n");
         #endif
