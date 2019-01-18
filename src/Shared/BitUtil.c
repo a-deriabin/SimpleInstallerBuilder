@@ -6,7 +6,8 @@
 
 #define DEBUG true
 
-BIT_READ_STREAM* open_bit_read_stream(char* source_buffer, uint32_t source_size) {
+BIT_READ_STREAM* open_bit_read_stream(char* source_buffer,
+             uint32_t source_size, uint8_t last_byte_offset) {
     if (source_buffer == NULL)
         return NULL;
     if (source_size < 1)
@@ -20,6 +21,7 @@ BIT_READ_STREAM* open_bit_read_stream(char* source_buffer, uint32_t source_size)
     stream->byte_size = source_size;
     stream->cur_bit = 0;
     stream->bit_buffer = source_buffer[0];
+    stream->last_byte_offset = last_byte_offset;
     return stream;
 }
 
@@ -45,15 +47,18 @@ int read_bit(BIT_READ_STREAM* stream, bool* bit_buffer) {
     stream->bit_buffer >>= 1;
     stream->cur_bit += 1;
     if (stream->cur_bit == 8) {
-        stream->bit_buffer = stream->source[stream->cur_byte];
-
         if (stream->cur_byte == stream->byte_size - 1) {
             stream->has_ended = true;
         }
         else {
             stream->cur_bit = 0;
             stream->cur_byte += 1;
+            stream->bit_buffer = stream->source[stream->cur_byte];
         }
+    }
+    else if (stream->cur_byte == stream->byte_size - 1) {
+        if (stream->cur_bit == 8 - stream->last_byte_offset)
+            stream->has_ended = true;
     }
 
     return 0;
@@ -95,16 +100,19 @@ int write_bit(BIT_WRITE_STREAM* stream, bool bit) {
     if (stream->dest == NULL)
         return -3;
 
-    const char BIT_MASK = -80; // 1000 0000
+    const char BIT_MASK = -128; // 1000 0000
 
-    stream->bit_buffer |= BIT_MASK * bit;
+    //printf("buffer before: %d\n", stream->bit_buffer);
+    //printf("write: %d\n", bit);
+    stream->bit_buffer = stream->bit_buffer | (uchar)(BIT_MASK * bit);
+    //printf("buffer after: %d\n", stream->bit_buffer);
 
     if (stream->cur_bit < 7) {
         stream->cur_bit += 1;
         stream->bit_buffer >>= 1;
     }
     else {
-        if (fwrite(&(stream->bit_buffer), sizeof(char), 1, stream->dest) < 1)
+        if (fwrite(&(stream->bit_buffer), sizeof(uchar), 1, stream->dest) < 1)
             return -4;
         stream->cur_bit = 0;
         stream->bit_buffer = 0;

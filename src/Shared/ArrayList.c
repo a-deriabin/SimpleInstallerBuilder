@@ -30,6 +30,10 @@ void list_set(array_list* list, int32_t i, void* value_p) {
     memcpy((char*)list->array + i * list->entry_size, value_p, list->entry_size);
 }
 
+void list_clear(array_list* list) {
+    list->size = 0;
+}
+
 void list_free(array_list* list) {
     free(list->array);
     free(list);

@@ -86,7 +86,7 @@ static FILE_APPEND_RESULT append_file(FILE *dest, FILE *source,
             return FILE_APPEND_WRITE_ERROR;
 
         #if DEBUG
-        printf("DBG: done writing offset\n");
+        printf("DBG: done writing offset: %u bits\n", offset_buffer);
         #endif
 
         // Write byte count
@@ -95,6 +95,10 @@ static FILE_APPEND_RESULT append_file(FILE *dest, FILE *source,
         if (w_result < 1)
             return FILE_APPEND_WRITE_ERROR;
 
+        #if DEBUG
+        printf("DBG: wrote compressed byte count: %u\n", byte_count);
+        #endif
+
         // Write uncompressed byte count
         w_result = fwrite(&buffer_size, sizeof(size_t), 1, dest);
         if (w_result < 1)
@@ -102,6 +106,7 @@ static FILE_APPEND_RESULT append_file(FILE *dest, FILE *source,
 
         close_bit_write_stream(w_stream);
 
+        // Write occurrence array
         w_result = write_occurrence_array(occur_array, dest);
         if (!w_result)
             return FILE_APPEND_COMPRESS_ERROR;

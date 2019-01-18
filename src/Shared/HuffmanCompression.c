@@ -5,6 +5,7 @@
 #include <string.h>
 
 #include "HuffmanCompression.h"
+#include "ArrayList.h"
 #include "BitUtil.h"
 
 #define DEBUG true
@@ -115,9 +116,14 @@ bool write_occurrence_array(huff_tree_node** arr, FILE* out_file) {
 bool compress_and_write(const char* data, const size_t data_size,
      huff_tree_node** init_array, BIT_WRITE_STREAM* out_stream) {
 
+    array_list* list = list_new(sizeof(bool));
+
     int w_result;
     for (size_t i = 0; i < data_size; i++) {
+        //printf("i = %u\n", i);
         char c = data[i];
+        if (i < 3)
+            printf("char: %d\n", c);
 
         huff_tree_node* node = init_array[c + 128];
         if (node == NULL) {
@@ -127,17 +133,43 @@ bool compress_and_write(const char* data, const size_t data_size,
             return false;
         }
 
+        list_clear(list);
         while (node->parent != NULL) {
+            bool to_add;
+
             if (node->parent->left == node)
-                w_result = write_bit(out_stream, 1);
+                to_add = 1;
+                //w_result = write_bit(out_stream, 1);
             else if (node->parent->right == node)
-                w_result = write_bit(out_stream, 0);
+                to_add = 0;
+                //w_result = write_bit(out_stream, 0);
             else {
                 #if DEBUG
                 printf("DBG: error: parent node doesn't reference to its child.\n");
                 #endif
                 return false;
             }
+
+            list_add(list, &to_add);
+
+            // if (w_result != 0) {
+            //     #if DEBUG
+            //     printf("DBG: Failed to write to a bit stream.\n");
+            //     #endif
+
+            //     return false;
+            // }
+
+            node = node->parent;
+        }
+
+        //printf("list size: %u\n", list->size);
+
+        for (int64_t j = (int64_t)list->size - 1; j >= 0; j--) {
+            bool to_write = *((bool*)list_get(list, (uint32_t)j));
+            if (i < 3)
+                printf("write bit: %d\n", to_write);
+            w_result = write_bit(out_stream, to_write);
 
             if (w_result != 0) {
                 #if DEBUG
@@ -146,8 +178,6 @@ bool compress_and_write(const char* data, const size_t data_size,
 
                 return false;
             }
-
-            node = node->parent;
         }
     } // end for()
 
@@ -216,6 +246,8 @@ char* read_and_decompress(const size_t uncompressed_size,
 
     while (!in_stream->has_ended) {
         r_result = read_bit(in_stream, &bit_buffer);
+        if (i < 3)
+            printf("got bit: %d\n", bit_buffer);
         if (r_result != 0) {
             #if DEBUG
             printf("DBG: error: failed to read bit. Code: %d\n", r_result);
@@ -257,6 +289,8 @@ char* read_and_decompress(const size_t uncompressed_size,
             }
 
             buffer[i] = cur_node->value;
+            if (i < 3)
+                printf("found code: %d\n", cur_node->value);
             i += 1;
             cur_node = root;
         }

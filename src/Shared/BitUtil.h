@@ -4,6 +4,8 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+typedef unsigned char uchar;
+
 typedef struct {
     bool is_open;
     bool has_ended;
@@ -11,7 +13,8 @@ typedef struct {
     uint32_t cur_byte;
     uint32_t byte_size;
     uint8_t cur_bit;
-    char bit_buffer;
+    uint8_t last_byte_offset;
+    uchar bit_buffer;
 } BIT_READ_STREAM;
 
 typedef struct {
@@ -19,10 +22,11 @@ typedef struct {
     FILE* dest;
     uint8_t cur_bit;
     uint32_t wrote_bytes;
-    char bit_buffer;
+    uchar bit_buffer;
 } BIT_WRITE_STREAM;
 
-BIT_READ_STREAM* open_bit_read_stream(char* source_buffer, uint32_t source_size);
+BIT_READ_STREAM* open_bit_read_stream(char* source_buffer,
+             uint32_t source_size, uint8_t last_byte_offset);
 int read_bit(BIT_READ_STREAM* stream, bool* bit_buffer);
 int skip_bit(BIT_READ_STREAM* stream);
 void close_bit_read_stream(BIT_READ_STREAM* stream);
