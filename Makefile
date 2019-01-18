@@ -1,4 +1,4 @@
-CFLAGS=-c -std=c11 -pedantic -Wall
+CFLAGS=-c -std=c11 -pedantic -Wall -Werror
 OFLAGS=-o
 
 all: FileAppendUtil InstallerBuilder InstallerProgram UninstallerProgram
