@@ -22,11 +22,25 @@ static int huff_node_comp(const void* el_left, const void* el_right) {
 huff_tree_node** init_occurrence_array(const char* data, const size_t data_size) {
     const size_t ARR_SIZE = 256;
     huff_tree_node** arr = (huff_tree_node**)malloc(sizeof(huff_tree_node*) * ARR_SIZE);
+    if (arr == NULL) {
+        #if DEBUG
+        printf("DBG: failed to malloc for array.\n");
+        #endif
+        return NULL;
+    }
 
-    for (char c = -128; c <= 127; c++) {
+    for (int c = -128; c <= 127; c++) {
         int i = c + 128;
+
         huff_tree_node* node = (huff_tree_node*) malloc(sizeof(huff_tree_node));
-        node->value = c;
+        if (node == NULL) {
+            #if DEBUG
+            printf("DBG: failed to malloc for array node.\n");
+            #endif
+            return NULL;
+        }
+
+        node->value = (char)c;
         node->count = 0;
         node->is_internal = false;
         node->left = NULL;
@@ -88,7 +102,7 @@ bool write_occurrence_array(huff_tree_node** arr, FILE* out_file) {
     for (size_t i = 0; i < ARR_SIZE; i++) {
         w_result = fwrite(&(arr[i]->count), sizeof(uint32_t), 1, out_file);
 
-        if (w_result != 0) {
+        if (w_result < 1) {
             #if DEBUG
             printf("Failed to write %d-th element of occurrence array.\n", i);
             #endif
@@ -104,6 +118,7 @@ bool compress_and_write(const char* data, const size_t data_size,
     int w_result;
     for (size_t i = 0; i < data_size; i++) {
         char c = data[i];
+
         huff_tree_node* node = init_array[c + 128];
         if (node == NULL) {
             #if DEBUG
@@ -181,9 +196,73 @@ huff_tree_node** read_occurrence_array(FILE* in_file) {
     return arr;
 }
 
-char* read_and_decompress(const size_t uncompressed_size, 
-        huff_tree_node** init_array, BIT_READ_STREAM* in_stream) {
+char* read_and_decompress(const size_t uncompressed_size,
+        huff_tree_node* root, BIT_READ_STREAM* in_stream) {
 
-    //TODO
-    return NULL;
+    char* buffer = (char*)malloc(uncompressed_size);
+    if (buffer == NULL) {
+        #if DEBUG
+        printf("DBG: error: failed to allocate %u bytes\n", uncompressed_size);
+        #endif
+        return NULL;
+    }
+
+    printf("DBG: uncompressed_size: %u\n", uncompressed_size);
+
+    huff_tree_node* cur_node = root;
+    size_t i = 0;
+    bool bit_buffer = 0;
+    int r_result = 0;
+
+    while (!in_stream->has_ended) {
+        r_result = read_bit(in_stream, &bit_buffer);
+        if (r_result != 0) {
+            #if DEBUG
+            printf("DBG: error: failed to read bit. Code: %d\n", r_result);
+            #endif
+            return NULL;
+        }
+
+        if (bit_buffer) {
+            #if DEBUG
+            if (cur_node->left == NULL) {
+                printf("DBG: error: left node is null.\n");
+                return NULL;
+            }
+            #endif
+            cur_node = cur_node->left;
+        }
+        else {
+            #if DEBUG
+            if (cur_node->right == NULL) {
+                printf("DBG: error: left node is null.\n");
+                return NULL;
+            }
+            #endif
+            cur_node = cur_node->right;
+        }
+
+        if (cur_node->left == NULL && cur_node->right == NULL) 
+        {
+            if (i >= uncompressed_size) {
+                #if DEBUG
+                printf("DBG: error: buffer overflow.\n");
+                #endif
+                return buffer;
+            }
+
+            if (cur_node == NULL) {
+                printf("cur node is null!\n");
+                return NULL;
+            }
+
+            buffer[i] = cur_node->value;
+            i += 1;
+            cur_node = root;
+        }
+    } //end while()
+
+    printf("DBG: finish read_and_decompress\n");
+
+    return buffer;
 }

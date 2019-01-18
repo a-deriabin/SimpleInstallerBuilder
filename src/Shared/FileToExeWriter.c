@@ -13,8 +13,6 @@
 
 #define DEBUG true
 
-typedef char buffer_t;
-
 static FILE_APPEND_RESULT append_file(FILE *dest, FILE *source,
          char* dest_filename) {
     
@@ -33,24 +31,44 @@ static FILE_APPEND_RESULT append_file(FILE *dest, FILE *source,
     int w_result;
 
     // Compress only large enough files
-    if (buffer_size > 100004096) { //TODO: change this number
+    if (buffer_size > 10004096) {
+        #if DEBUG
+        printf("DBG: start compression\n");
+        #endif
+
         did_use_compression = true;
         
         huff_tree_node** occur_array = init_occurrence_array(buffer, buffer_size);
         if (occur_array == NULL)
             return FILE_APPEND_COMPRESS_ERROR;
 
+        #if DEBUG
+        printf("DBG: done init occurrence array.\n");
+        #endif
+
         huff_tree_node* tree = build_tree(occur_array);
         if (tree == NULL)
             return FILE_APPEND_COMPRESS_ERROR;
+
+        #if DEBUG
+        printf("DBG: done building tree.\n");
+        #endif
 
         BIT_WRITE_STREAM* w_stream = open_bit_write_stream(dest);
         if (w_stream == NULL)
             return FILE_APPEND_COMPRESS_ERROR;
 
+        #if DEBUG
+        printf("DBG: done opening bit write stream.\n");
+        #endif
+
         w_result = compress_and_write(buffer, buffer_size, occur_array, w_stream);
-        if (w_stream != 0)
+        if (!w_result)
             return FILE_APPEND_COMPRESS_ERROR;
+
+        #if DEBUG
+        printf("DBG: done compress_and_write.\n");
+        #endif
 
         // Align bit stream to 8 bits
         uint8_t offset_buffer = 0;
@@ -58,27 +76,39 @@ static FILE_APPEND_RESULT append_file(FILE *dest, FILE *source,
         if (w_result != 0)
             return FILE_APPEND_COMPRESS_ERROR;
 
+        #if DEBUG
+        printf("DBG: done bit flush.\n");
+        #endif
+
         // Write offset
         w_result = fwrite(&offset_buffer, sizeof(uint8_t), 1, dest);
-        if (w_result != 0)
+        if (w_result < 1)
             return FILE_APPEND_WRITE_ERROR;
+
+        #if DEBUG
+        printf("DBG: done writing offset\n");
+        #endif
 
         // Write byte count
         uint32_t byte_count = w_stream->wrote_bytes;
         w_result = fwrite(&byte_count, sizeof(uint32_t), 1, dest);
-        if (w_result != 0)
+        if (w_result < 1)
             return FILE_APPEND_WRITE_ERROR;
 
         // Write uncompressed byte count
         w_result = fwrite(&buffer_size, sizeof(size_t), 1, dest);
-        if (w_result != 0)
+        if (w_result < 1)
             return FILE_APPEND_WRITE_ERROR;
 
         close_bit_write_stream(w_stream);
 
         w_result = write_occurrence_array(occur_array, dest);
-        if (w_result)
+        if (!w_result)
             return FILE_APPEND_COMPRESS_ERROR;
+
+        #if DEBUG
+        printf("DBG: done compression\n");
+        #endif
     }
     else {
         did_use_compression = false;

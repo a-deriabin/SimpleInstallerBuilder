@@ -51,10 +51,18 @@ static FILE_EXTRACT_RESULT extract_next(FILE* from, const char* dest_dir) {
     size_t file_size = 0;
 
     if (is_compressed) {
+        #if DEBUG
+        printf("DBG: decompression started\n");
+        #endif
+
         // Read occurrence array
         huff_tree_node** occur_array = read_occurrence_array(from);
         if (occur_array == NULL)
             return EXTRACT_DECOMPRESS_ERROR;
+
+        #if DEBUG
+        printf("DBG: read occurrence array\n");
+        #endif
 
         // Read uncompressed file size
         fseek(from, -sizeof(size_t), SEEK_CUR);
@@ -62,6 +70,10 @@ static FILE_EXTRACT_RESULT extract_next(FILE* from, const char* dest_dir) {
         if (read_result < 1)
             return EXTRACT_READ_ERROR;
         fseek(from, -sizeof(size_t), SEEK_CUR);
+
+        #if DEBUG
+        printf("DBG: done read file size\n");
+        #endif
 
         // Read byte count
         uint32_t byte_count = 0;
@@ -79,12 +91,56 @@ static FILE_EXTRACT_RESULT extract_next(FILE* from, const char* dest_dir) {
             return EXTRACT_READ_ERROR;
         fseek(from, -sizeof(uint8_t), SEEK_CUR);
 
-
-
         // Read compressed data
+        char* compressed_buffer = (char*)malloc(byte_count);
+        if (compressed_buffer == NULL)
+            return EXTRACT_DECOMPRESS_ERROR;
+        fseek(from, -sizeof(char) * byte_count, SEEK_CUR);
+        read_result = fread(compressed_buffer, sizeof(char) * byte_count, 1, from);
+        if (read_result < 1)
+            return EXTRACT_READ_ERROR;
+        fseek(from, -sizeof(char) * byte_count, SEEK_CUR);
 
-        // Open and offset bit stream
-        //BIT_READ_STREAM r_stream = open_bit_read_stream()
+        // Build code tree
+        huff_tree_node* tree_root = build_tree(occur_array);
+        if (tree_root == NULL)
+            return EXTRACT_DECOMPRESS_ERROR;
+
+        #if DEBUG
+        printf("DBG: done build code tree\n");
+        #endif
+
+        // Open bit stream
+        BIT_READ_STREAM* r_stream = open_bit_read_stream(compressed_buffer, byte_count);
+        if (r_stream == NULL)
+            return EXTRACT_DECOMPRESS_ERROR;
+
+        #if DEBUG
+        printf("DBG: done open read stream\n");
+        #endif
+
+        // Offset bit stream
+        for (uint8_t i = 0; i < bit_offset; i++) {
+            read_result = skip_bit(r_stream);
+            if (read_result != 0)
+                return EXTRACT_DECOMPRESS_ERROR;
+        }
+
+        #if DEBUG
+        printf("DBG: done bit offset\n");
+        #endif
+
+        // Decompress
+        buffer = read_and_decompress(file_size, tree_root, r_stream);
+        if (buffer == NULL)
+            return EXTRACT_DECOMPRESS_ERROR;
+
+        #if DEBUG
+        printf("DBG: done read_and_decompress\n");
+        #endif
+
+        // Close bit stream
+        close_bit_read_stream(r_stream);
     }
     else {
         // Read file size

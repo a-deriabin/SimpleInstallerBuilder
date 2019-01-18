@@ -4,6 +4,8 @@
 #include <stdint.h>
 #include "BitUtil.h"
 
+#define DEBUG true
+
 BIT_READ_STREAM* open_bit_read_stream(char* source_buffer, uint32_t source_size) {
     if (source_buffer == NULL)
         return NULL;
@@ -35,16 +37,22 @@ int read_bit(BIT_READ_STREAM* stream, bool* bit_buffer) {
 
     const char BIT_MASK = 1;
 
+    // printf("DBG: bit buffer value: %d\n", stream->bit_buffer);
+    // printf("DBG: cur bit: %d\n", stream->cur_bit);
+    // printf("DBG: cur byte: %d\n", stream->cur_byte);
+
     *bit_buffer = stream->bit_buffer & BIT_MASK;
     stream->bit_buffer >>= 1;
     stream->cur_bit += 1;
     if (stream->cur_bit == 8) {
-        if (stream->cur_byte == stream->byte_size) {
+        stream->bit_buffer = stream->source[stream->cur_byte];
+
+        if (stream->cur_byte == stream->byte_size - 1) {
             stream->has_ended = true;
         }
         else {
+            stream->cur_bit = 0;
             stream->cur_byte += 1;
-            stream->bit_buffer = stream->source[stream->cur_byte];
         }
     }
 
@@ -89,7 +97,7 @@ int write_bit(BIT_WRITE_STREAM* stream, bool bit) {
 
     const char BIT_MASK = -80; // 1000 0000
 
-    stream->bit_buffer |= BIT_MASK & bit;
+    stream->bit_buffer |= BIT_MASK * bit;
 
     if (stream->cur_bit < 7) {
         stream->cur_bit += 1;
