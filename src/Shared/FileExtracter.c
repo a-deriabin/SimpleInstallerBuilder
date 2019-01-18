@@ -7,6 +7,8 @@
 #include "FileExtracter.h"
 #include "FileUtil.h"
 #include "StringUtil.h"
+#include "BitUtil.h"
+#include "HuffmanCompression.h"
 
 #define DEBUG true
 
@@ -23,6 +25,8 @@ static FILE_EXTRACT_RESULT extract_next(FILE* from, const char* dest_dir) {
     char* name_str = (char*) malloc(sizeof(char) * name_length);
     fseek(from, -sizeof(char) * name_length, SEEK_CUR);
     read_result = fread(name_str, sizeof(char) * name_length, 1, from);
+    if (read_result < 1)
+        return EXTRACT_READ_ERROR;
     fseek(from, -sizeof(char) * name_length, SEEK_CUR);
 
     #if DEBUG
@@ -34,6 +38,8 @@ static FILE_EXTRACT_RESULT extract_next(FILE* from, const char* dest_dir) {
     char is_compressed = 0;
     fseek(from, -sizeof(char), SEEK_CUR);
     read_result = fread(&is_compressed, sizeof(char), 1, from);
+    if (read_result < 1)
+        return EXTRACT_READ_ERROR;
     fseek(from, -sizeof(char), SEEK_CUR);
 
     #if DEBUG
@@ -42,16 +48,51 @@ static FILE_EXTRACT_RESULT extract_next(FILE* from, const char* dest_dir) {
 
     // These should be filled during file extraction
     char* buffer = NULL;
-    uint32_t file_size = 0;
+    size_t file_size = 0;
 
     if (is_compressed) {
-        //TODO: decompress
+        // Read occurrence array
+        huff_tree_node** occur_array = read_occurrence_array(from);
+        if (occur_array == NULL)
+            return EXTRACT_DECOMPRESS_ERROR;
+
+        // Read uncompressed file size
+        fseek(from, -sizeof(size_t), SEEK_CUR);
+        read_result = fread(&file_size, sizeof(size_t), 1, from);
+        if (read_result < 1)
+            return EXTRACT_READ_ERROR;
+        fseek(from, -sizeof(size_t), SEEK_CUR);
+
+        // Read byte count
+        uint32_t byte_count = 0;
+        fseek(from, -sizeof(uint32_t), SEEK_CUR);
+        read_result = fread(&byte_count, sizeof(uint32_t), 1, from);
+        if (read_result < 1)
+            return EXTRACT_READ_ERROR;
+        fseek(from, -sizeof(uint32_t), SEEK_CUR);
+
+        // Read bit offset
+        uint8_t bit_offset = 0;
+        fseek(from, -sizeof(uint8_t), SEEK_CUR);
+        read_result = fread(&bit_offset, sizeof(uint8_t), 1, from);
+        if (read_result < 1)
+            return EXTRACT_READ_ERROR;
+        fseek(from, -sizeof(uint8_t), SEEK_CUR);
+
+
+
+        // Read compressed data
+
+        // Open and offset bit stream
+        //BIT_READ_STREAM r_stream = open_bit_read_stream()
     }
     else {
         // Read file size
-        fseek(from, -sizeof(uint32_t), SEEK_CUR);
-        read_result = fread(&file_size, sizeof(uint32_t), 1, from);
-        fseek(from, -sizeof(uint32_t), SEEK_CUR);
+        fseek(from, -sizeof(size_t), SEEK_CUR);
+        read_result = fread(&file_size, sizeof(size_t), 1, from);
+        if (read_result < 1)
+            return EXTRACT_READ_ERROR;
+        fseek(from, -sizeof(size_t), SEEK_CUR);
 
         #if DEBUG
         printf("DBG: read file size: %u\n", file_size);
@@ -61,6 +102,8 @@ static FILE_EXTRACT_RESULT extract_next(FILE* from, const char* dest_dir) {
         buffer = (char*) malloc(file_size);
         fseek(from, -sizeof(char) * file_size, SEEK_CUR);
         read_result = fread(buffer, sizeof(char) * file_size, 1, from);
+        if (read_result < 1)
+            return EXTRACT_READ_ERROR;
         fseek(from, -sizeof(char) * file_size, SEEK_CUR);
     }
 

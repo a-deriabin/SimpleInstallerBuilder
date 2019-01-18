@@ -14,25 +14,20 @@ static void print_extract_error(FILE_EXTRACT_RESULT result) {
         case EXTRACT_OPEN_SOURCE_ERROR:
             printf("Failed to open source file.\n");
             break;
-
         case EXTRACT_OPEN_DEST_ERROR:
             printf("Failed to open destination file.\n");
             break;
-
         case EXTRACT_READ_ERROR:
             printf("Failed to read from source file.\n");
             break;
-
         case EXTRACT_WRITE_ERROR:
             printf("Failed to write to destination file.\n");
             break;
-
+        case EXTRACT_DECOMPRESS_ERROR:
+            printf("Failed to decompress extracted data.\n");
+            break;
         case EXTRACT_SUCCESS:
             printf("Everything's ok.\n");
-            break;
-
-        default:
-            printf("Unknown error.\n");
             break;
     }
 }

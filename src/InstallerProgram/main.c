@@ -10,21 +10,18 @@ static char* get_result_msg(FILE_EXTRACT_RESULT result) {
     switch (result) {
         case EXTRACT_SUCCESS:
             return "Installed successfully.\n";
-
         case EXTRACT_OPEN_SOURCE_ERROR:
             return "Error: failed to open source file.\n";
-
         case EXTRACT_OPEN_DEST_ERROR:
             return "Error: failed to open destination file.\n";
-
         case EXTRACT_READ_ERROR:
             return "Error: failed to read from file.\n";
-
         case EXTRACT_WRITE_ERROR:
             return "Error: failed to write to file.\n";
-
+        case EXTRACT_DECOMPRESS_ERROR:
+            return "Error: failed to decompress extracted data.\n";
         default:
-            return "Unknown result.\n";
+            return "Unknown error.\n";
     }
 }
 

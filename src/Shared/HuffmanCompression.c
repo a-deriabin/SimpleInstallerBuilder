@@ -136,12 +136,54 @@ bool compress_and_write(const char* data, const size_t data_size,
         }
     } // end for()
 
-    // // Align bit stream to 8 bits
-    // uint8_t offset_buffer = 0;
-    // flush_bit_write_stream(stream, &offset_buffer);
-
-    // // Write bit stream offset
-    // fwrite(&offset_buffer, sizeof(uint8_t), 1, out_file);
     return true;
 }
 
+huff_tree_node** read_occurrence_array(FILE* in_file) {
+    const size_t ARR_SIZE = 256;
+    fseek(in_file, -sizeof(uint32_t) * ARR_SIZE, SEEK_CUR);
+    uint32_t read_buff = 0;
+    int r_result;
+
+    huff_tree_node** arr = (huff_tree_node**)malloc(sizeof(huff_tree_node*) * ARR_SIZE);
+    if (arr == NULL) {
+        #if DEBUG
+        printf("DBG: error: failed to allocate memory for occurrence array!\n");
+        #endif
+        return NULL;
+    }
+    for (size_t i = 0; i < ARR_SIZE; i++) {
+        r_result = fread(&read_buff, sizeof(uint32_t), 1, in_file);
+        if (r_result < 1) {
+            #if DEBUG
+            printf("DBG: error: failed to read occurrence array.\n");
+            #endif
+            return NULL;
+        }
+
+        huff_tree_node* node = (huff_tree_node*)malloc(sizeof(huff_tree_node));
+        if (node == NULL) {
+            #if DEBUG
+            printf("DBG: error: failed to allocate memory for array node!\n");
+            #endif
+            return NULL;
+        }
+        node->value = (char)(i - 128);
+        node->count = read_buff;
+        node->is_internal = false;
+        node->left = NULL;
+        node->right = NULL;
+        node->parent = NULL;
+        arr[i] = node;
+    }
+
+    fseek(in_file, -sizeof(uint32_t) * ARR_SIZE, SEEK_CUR);
+    return arr;
+}
+
+char* read_and_decompress(const size_t uncompressed_size, 
+        huff_tree_node** init_array, BIT_READ_STREAM* in_stream) {
+
+    //TODO
+    return NULL;
+}

@@ -30,32 +30,62 @@ static FILE_APPEND_RESULT append_file(FILE *dest, FILE *source,
     #endif
 
     char did_use_compression;
-    int wrote_count;
+    int w_result;
 
     // Compress only large enough files
     if (buffer_size > 100004096) { //TODO: change this number
         did_use_compression = true;
         
-        //TODO: CHECK RESULTS!!! (NULL, etc)
-
         huff_tree_node** occur_array = init_occurrence_array(buffer, buffer_size);
+        if (occur_array == NULL)
+            return FILE_APPEND_COMPRESS_ERROR;
+
         huff_tree_node* tree = build_tree(occur_array);
         if (tree == NULL)
             return FILE_APPEND_COMPRESS_ERROR;
 
         BIT_WRITE_STREAM* w_stream = open_bit_write_stream(dest);
-        compress_and_write(buffer, buffer_size, occur_array, w_stream);
-        //TODO: flush, write offset and file size
+        if (w_stream == NULL)
+            return FILE_APPEND_COMPRESS_ERROR;
+
+        w_result = compress_and_write(buffer, buffer_size, occur_array, w_stream);
+        if (w_stream != 0)
+            return FILE_APPEND_COMPRESS_ERROR;
+
+        // Align bit stream to 8 bits
+        uint8_t offset_buffer = 0;
+        w_result = flush_bit_write_stream(w_stream, &offset_buffer);
+        if (w_result != 0)
+            return FILE_APPEND_COMPRESS_ERROR;
+
+        // Write offset
+        w_result = fwrite(&offset_buffer, sizeof(uint8_t), 1, dest);
+        if (w_result != 0)
+            return FILE_APPEND_WRITE_ERROR;
+
+        // Write byte count
+        uint32_t byte_count = w_stream->wrote_bytes;
+        w_result = fwrite(&byte_count, sizeof(uint32_t), 1, dest);
+        if (w_result != 0)
+            return FILE_APPEND_WRITE_ERROR;
+
+        // Write uncompressed byte count
+        w_result = fwrite(&buffer_size, sizeof(size_t), 1, dest);
+        if (w_result != 0)
+            return FILE_APPEND_WRITE_ERROR;
+
         close_bit_write_stream(w_stream);
 
-        write_occurrence_array(occur_array, dest);
+        w_result = write_occurrence_array(occur_array, dest);
+        if (w_result)
+            return FILE_APPEND_COMPRESS_ERROR;
     }
     else {
         did_use_compression = false;
 
         // Write raw file bytes
-        wrote_count = fwrite(buffer, buffer_size, 1, dest);
-        if (wrote_count < 1)
+        w_result = fwrite(buffer, buffer_size, 1, dest);
+        if (w_result < 1)
             return FILE_APPEND_WRITE_ERROR;
 
         #if DEBUG
@@ -63,8 +93,8 @@ static FILE_APPEND_RESULT append_file(FILE *dest, FILE *source,
         #endif
 
         // Append byte count
-        wrote_count = fwrite(&buffer_size, sizeof(uint32_t), 1, dest);
-        if (wrote_count < 1)
+        w_result = fwrite(&buffer_size, sizeof(size_t), 1, dest);
+        if (w_result < 1)
             return FILE_APPEND_WRITE_ERROR;
 
         #if DEBUG
@@ -73,14 +103,14 @@ static FILE_APPEND_RESULT append_file(FILE *dest, FILE *source,
     }
 
     // Write compression marker byte
-    wrote_count = fwrite(&did_use_compression, sizeof(char), 1, dest);
-    if (wrote_count < 1)
+    w_result = fwrite(&did_use_compression, sizeof(char), 1, dest);
+    if (w_result < 1)
         return FILE_APPEND_WRITE_ERROR;
 
     // Append file name
     uint16_t name_length = (uint16_t) strlen(dest_filename) + 1;
-    wrote_count = fwrite(dest_filename, sizeof(char) * name_length, 1, dest);
-    if (wrote_count < 1)
+    w_result = fwrite(dest_filename, sizeof(char) * name_length, 1, dest);
+    if (w_result < 1)
         return FILE_APPEND_WRITE_ERROR;
 
     #if DEBUG
@@ -88,8 +118,8 @@ static FILE_APPEND_RESULT append_file(FILE *dest, FILE *source,
     #endif
 
     // Append file name length
-    wrote_count = fwrite(&name_length, sizeof(uint16_t), 1, dest);
-    if (wrote_count < 1)
+    w_result = fwrite(&name_length, sizeof(uint16_t), 1, dest);
+    if (w_result < 1)
         return FILE_APPEND_WRITE_ERROR;
 
     #if DEBUG

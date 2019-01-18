@@ -51,6 +51,11 @@ int read_bit(BIT_READ_STREAM* stream, bool* bit_buffer) {
     return 0;
 }
 
+int skip_bit(BIT_READ_STREAM* stream) {
+    bool bit_buffer = 0;
+    return read_bit(stream, &bit_buffer);
+}
+
 void close_bit_read_stream(BIT_READ_STREAM* stream) {
     if (stream == NULL)
         return;
@@ -68,6 +73,7 @@ BIT_WRITE_STREAM* open_bit_write_stream(FILE* dest_file) {
     stream->is_open = true;
     stream->dest = dest_file;
     stream->cur_bit = 0;
+    stream->wrote_bytes = 0;
     stream->bit_buffer = 0;
 
     return stream;
@@ -94,6 +100,7 @@ int write_bit(BIT_WRITE_STREAM* stream, bool bit) {
             return -4;
         stream->cur_bit = 0;
         stream->bit_buffer = 0;
+        stream->wrote_bytes += 1;
     }
 
     return 0;
