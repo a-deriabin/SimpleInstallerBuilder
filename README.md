@@ -31,4 +31,4 @@
 ## Limitations
 * Max file size - 4 GB
 * Windows only
-* Some anti-virus programs might consider generated installers malicious files
+* Some anti-virus programs might consider generated installer/uninstaller a malicious file
