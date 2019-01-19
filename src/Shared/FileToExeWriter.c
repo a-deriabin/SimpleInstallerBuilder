@@ -204,11 +204,6 @@ static FILE_APPEND_RESULT read_and_append(FILE* dest_file, char* source_file,
     FILE_APPEND_RESULT result = append_file(dest_file, in_file, rel_file_name);
     fclose(in_file);
 
-    // Free memory
-    free(source_path_copy);
-    free(file_name);
-    free(rel_file_name);
-
     if (result != FILE_APPEND_SUCCESS)
         return result;
     return FILE_APPEND_SUCCESS;
