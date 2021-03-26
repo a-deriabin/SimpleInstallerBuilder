@@ -244,10 +244,10 @@ static FILE_APPEND_RESULT read_and_append_recursive(
             free(full_entry_path);
         }
 
-        free(inner_entries);
-        free(new_prev_path);
-        free(cur_dir_name);
-        free(source_path_copy);
+        //free(inner_entries);
+        //free(new_prev_path);
+        //free(cur_dir_name);
+        //free(source_path_copy);
         return FILE_APPEND_SUCCESS;
     }
     else {
